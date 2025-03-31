@@ -45,5 +45,10 @@ async def run_flow():
         logger.error(f"Error: {str(e)}")
 
 
+def execute_workflow(workflow_name, parameters):
+    # 工作流执行逻辑
+    pass
+
+
 if __name__ == "__main__":
     asyncio.run(run_flow())

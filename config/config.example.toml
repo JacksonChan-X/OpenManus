@@ -25,7 +25,7 @@ temperature = 0.0                          # Controls randomness
 
 # [llm] #OLLAMA:
 # api_type = 'ollama'
-# model = "llama3.2"
+# model = "llama3.2"=
 # base_url = "http://localhost:11434/v1"
 # api_key = "ollama"
 # max_tokens = 4096

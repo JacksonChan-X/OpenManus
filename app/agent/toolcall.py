@@ -8,9 +8,9 @@ from app.agent.react import ReActAgent
 from app.exceptions import TokenLimitExceeded
 from app.logger import logger
 from app.prompt.toolcall import NEXT_STEP_PROMPT, SYSTEM_PROMPT
-from app.schema import TOOL_CHOICE_TYPE, AgentState, Message, ToolCall, ToolChoice
+from app.schema import (TOOL_CHOICE_TYPE, AgentState, Message, ToolCall,
+                        ToolChoice)
 from app.tool import CreateChatCompletion, Terminate, ToolCollection
-
 
 TOOL_CALL_REQUIRED = "Tool calls required but none provided"
 
@@ -116,6 +116,21 @@ class ToolCallAgent(ReActAgent):
 
             # For 'auto' mode, continue with content if no commands but content exists
             if self.tool_choices == ToolChoice.AUTO and not self.tool_calls:
+                last_planning_count = 0
+                # Count how many consecutive messages are just planning without tool use
+                for msg in reversed(self.memory.messages[-4:-1]):  # Check last 3 messages
+                    if msg.role == "assistant" and not getattr(msg, "tool_calls", None):
+                        last_planning_count += 1
+                    else:
+                        break
+
+                # If we've been planning without action for several steps, add a reminder
+                if last_planning_count >= 2 and hasattr(self, "next_step_prompt") and self.next_step_prompt:
+                    logger.warning(f"⚠️ {self.name} has been planning without using tools for {last_planning_count} steps")
+                    # Add a stronger prompt to encourage tool selection
+                    reminder = "IMPORTANT: You MUST select a tool to make progress. Do not just plan - take concrete action now."
+                    if isinstance(self.next_step_prompt, str):
+                        self.next_step_prompt = f"{reminder}\n\n{self.next_step_prompt}"
                 return bool(content)
 
             return bool(self.tool_calls)
